@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/yuin/goldmark"
 )
 
 type SlugReader interface {
@@ -32,10 +35,18 @@ func PostHandler(sl SlugReader) http.HandlerFunc {
 		slug := r.PathValue("slug")
 		postMarkdown, err := sl.Read(slug)
 		if err != nil {
+			// TODO: Handle different errors in the future
 			http.Error(w, "Post not found", http.StatusNotFound)
 			return
 		}
-		fmt.Fprint(w, postMarkdown)
+		var buf bytes.Buffer
+		err = goldmark.Convert([]byte(postMarkdown), &buf)
+		if err != nil {
+			http.Error(w, "Error converting markdown", http.StatusInternalServerError)
+			return
+		}
+
+		io.Copy(w, &buf)
 	}
 }
 
