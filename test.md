@@ -1,1 +1,2 @@
-# Test Blog
+# Building a blog in Go
+
